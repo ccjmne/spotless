@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 DiffPlug
+ * Copyright 2016-2025 DiffPlug
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,14 @@ public class SpotlessCheckMojo extends AbstractSpotlessMojo {
 	@Parameter(defaultValue = "WARNING")
 	private MessageSeverity m2eIncrementalBuildMessageSeverity;
 
+	/**
+	 * The execution id of the current build.
+	 * Will start with 'default-' if none specified.
+	 * @see https://maven.apache.org/guides/mini/guide-default-execution-ids.html
+	 */
+	@Parameter(defaultValue = "${mojoExecution.executionId}", readonly = true)
+	private String executionId;
+
 	@Override
 	protected void process(String name, Iterable<File> files, Formatter formatter, UpToDateChecker upToDateChecker) throws MojoExecutionException {
 		ImpactedFilesTracker counter = new ImpactedFilesTracker();
@@ -104,8 +112,9 @@ public class SpotlessCheckMojo extends AbstractSpotlessMojo {
 		}
 
 		if (!problemFiles.isEmpty()) {
+			String fixCmdSuffix = this.executionId.startsWith("default-") ? "" : "@" + this.executionId;
 			throw new MojoExecutionException(DiffMessageFormatter.builder()
-					.runToFix("Run 'mvn spotless:apply' to fix these violations.")
+					.runToFix(String.format("Run '%s' to fix these violations.", "mvn spotless:apply" + fixCmdSuffix))
 					.formatter(baseDir.toPath(), formatter)
 					.problemFiles(problemFiles)
 					.getMessage());

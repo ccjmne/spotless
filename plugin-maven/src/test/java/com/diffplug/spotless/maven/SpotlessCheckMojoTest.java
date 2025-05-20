@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 DiffPlug
+ * Copyright 2016-2025 DiffPlug
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,19 @@ class SpotlessCheckMojoTest extends MavenIntegrationHarness {
 	@Test
 	void testSpotlessCheckWithFormattingViolations() throws Exception {
 		writePomWithJavaLicenseHeaderStep();
-		testSpotlessCheck(UNFORMATTED_FILE, "spotless:check", true);
+		testSpotlessCheck(UNFORMATTED_FILE, "spotless:check", true, "mvn spotless:apply");
 	}
 
 	@Test
 	void testSpotlessCheckWithoutFormattingViolations() throws Exception {
 		writePomWithJavaLicenseHeaderStep();
-		testSpotlessCheck(FORMATTED_FILE, "spotless:check", false);
+		testSpotlessCheck(FORMATTED_FILE, "spotless:check", false, "mvn spotless:apply");
 	}
 
 	@Test
 	void testSkipSpotlessCheckWithFormattingViolations() throws Exception {
 		writePomWithJavaLicenseHeaderStep();
-		testSpotlessCheck(UNFORMATTED_FILE, "spotless:check -Dspotless.check.skip", false);
+		testSpotlessCheck(UNFORMATTED_FILE, "spotless:check -Dspotless.check.skip", false, "mvn spotless:apply");
 	}
 
 	@Test
@@ -65,10 +65,10 @@ class SpotlessCheckMojoTest extends MavenIntegrationHarness {
 				null,
 				null);
 
-		testSpotlessCheck(UNFORMATTED_FILE, "verify", true);
+		testSpotlessCheck(UNFORMATTED_FILE, "verify", true, "mvn spotless:apply@check");
 	}
 
-	private void testSpotlessCheck(String fileName, String command, boolean expectError) throws Exception {
+	private void testSpotlessCheck(String fileName, String command, boolean expectError, String fixCmd) throws Exception {
 		setFile("license.txt").toResource("license/TestLicense");
 		setFile("src/main/java/com.github.youribonnaffe.gradle.format/Java8Test.java").toResource(fileName);
 
@@ -77,6 +77,7 @@ class SpotlessCheckMojoTest extends MavenIntegrationHarness {
 		if (expectError) {
 			ProcessRunner.Result result = mavenRunner.runHasError();
 			assertThat(result.stdOutUtf8()).contains("The following files had format violations");
+			assertThat(result.stdOutUtf8()).contains(String.format("Run '%s' to fix", fixCmd));
 		} else {
 			mavenRunner.runNoError();
 		}
